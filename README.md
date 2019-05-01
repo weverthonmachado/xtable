@@ -10,7 +10,7 @@
 
 Install it by typing:
 ```stata
-net describe put_table, from ("https://raw.githubusercontent.com/weverthonmachado/xtable/master")
+net install xtable, from ("https://raw.githubusercontent.com/weverthonmachado/xtable/master")
 ```
 
 ## Usage
