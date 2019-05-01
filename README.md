@@ -48,7 +48,7 @@ This is an experimental program that I put together to export the kinds of table
 - You can't use it with `by` (i.e. `by varname: xtable`). All the other options used with `table`, such as `if`, `in`, and `weights` are ok;
 - If the program breaks or throws an error, you might lose the data that was in memory, depending on where the error occurred. I can fix it quite easily with a `preserve`, but I have to change some things in the code first. By now, it's better to save the data before running `xtable`
 
-# Author
+## Author
 
 **Weverthon Machado**  
 PhD Candidate in Sociology  
