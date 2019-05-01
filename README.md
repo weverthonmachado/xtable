@@ -50,8 +50,8 @@ This is an experimental program that I put together to export the kinds of table
 
 # Author
 
-**Weverthon Machado**
-PhD Candidate in Sociology
-[Universidade do Estado do Rio de Janeiro](www.iesp.uerj.br/)
+**Weverthon Machado**  
+PhD Candidate in Sociology  
+[Universidade do Estado do Rio de Janeiro](www.iesp.uerj.br/)  
 
-[](weverthonmachado.github.io)
+[weverthonmachado.github.io](weverthonmachado.github.io)
