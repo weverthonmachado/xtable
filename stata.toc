@@ -1,0 +1,6 @@
+********************************************** stata.toc
+v 3
+d 
+d 
+p xtable - export table output to excel
+
