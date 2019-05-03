@@ -7,7 +7,7 @@
 
 For exporting Stata's output to Word, see [`asdoc`](https://www.statalist.org/forums/forum/general-stata-discussion/general/1435798-asdoc-an-easy-way-of-creating-publication-quality-tables-from-stata-commands).
 
-## Instalation 
+## Installation 
 
 Install it by typing:
 ```stata
