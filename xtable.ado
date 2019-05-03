@@ -3,7 +3,7 @@
 
 /// Weverthon Machado
 
-v0.3 - 2019-05-03
+v0.3.1 - 2019-05-03
 ---------------------------------------------------------------------*/
 capture program drop xtable
 program define xtable
@@ -178,6 +178,7 @@ mat rownames xtable = `mat_rownames'
 
 /* Columns */
 if !missing("`colvar'") {
+
 	foreach scol in `scol_levels' {
 
 		local pscol: list posof "`scol'" in scol_levels
@@ -194,24 +195,27 @@ if !missing("`colvar'") {
 
 		local mat_colnames = `"`mat_colnames'"' + `"`mat_colnames_`pscol''"' 
 	}
-}
 
 mat colnames xtable = `mat_colnames'
+
+}
+
 
 /*********************************************************************
 # Export
 **********************************************************************/
 local rowvar_label: var label `rowvar'
-local colvar_label: var label `colvar'
-
 
 #delimit ;
-qui putexcel A2 = matrix(xtable, names) 
-			 A2 = ("`rowvar_label'")
-			 B1 = ("`colvar_label'")
+qui putexcel A2 = matrix(xtable, names) A2 = ("`rowvar_label'")
 			 using xtable.xlsx, replace
 ;
 #delimit cr
+
+if !missing("`colvar'") {
+	local colvar_label: var label `colvar'
+	qui putexcel B1 = ("`colvar_label'") using xtable.xlsx, modify
+}
 
 di as smcl "Output written to {browse  "`"xtable.xlsx}"'" 
 end
