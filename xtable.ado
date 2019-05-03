@@ -3,18 +3,21 @@
 
 /// Weverthon Machado
 
-v0.1 - 2019-05-01
+v0.3 - 2019-05-03
 ---------------------------------------------------------------------*/
 capture program drop xtable
 program define xtable
 version 13,1
 
-/* Especicando apenas as opções de table que preciso usar como locals.
-O asterisco no final da conta de aceitar todas as outras */
+/* Get only -table- options that are needed here. The final asterisk 
+captures everything else */
 syntax varlist(max=3) [if] [in] [fw aw pw iw] [, /* 
 		*/ BY(varlist) COLumn REPLACE ROW SColumn  *]
 
 
+/*********************************************************************
+# Parse arguments
+**********************************************************************/
 /* Tokenize */
 tokenize
 local tableargs "`0'"
@@ -22,175 +25,193 @@ local tableargs "`0'"
 tokenize `varlist'
 local rowvar = "`1'"
 local colvar = "`2'"
-local scvar = "`3'"
-local srvar =  "`by'"
+local scolvar = "`3'"
+local srowvar =  "`by'"
 
 
-/* Roda table com replace */
-tempfile originaldata
-qui save `originaldata'
+/* Run -table- */
+preserve
 table `tableargs' replace
 
 
-/* número de tables (ie, o numero de estatisticas calculadas em cont()) */
-unab tablelist: table*
-local ntables: word count `tablelist'
+/* Get numbers and levels of vars and stats */
+qui levelsof `rowvar', local(row_levels) missing
+local nrow: list sizeof row_levels
 
-qui levelsof `rowvar', local(r_levels)
-qui levelsof `colvar', local(c_levels)
-if !missing("`srvar'") {
-	qui levelsof `srvar', local(sr_levels)
+if !missing("`colvar'") {
+	qui levelsof `colvar', local(col_levels) missing
+	local ncol: list sizeof col_levels
 }
 else {
-	local sr_levels 1
+	local col_levels 1
+	local ncol = 1
 }
 
 
-local nrow: list sizeof r_levels
-local ncol: list sizeof c_levels
-if !missing("`srvar'") {
-	local nsr:  list sizeof sr_levels
-} 
+if !missing("`scolvar'") {
+	qui levelsof `scolvar', local(scol_levels) missing
+	local nscol: list sizeof scol_levels
+}
 else {
-	local nsr = 1
+	local scol_levels 1
+	local nscol = 1
 }
 
-cap drop _fillin
-fillin `rowvar' `colvar' `srvar'
-drop _fillin
+
+if !missing("`srowvar'") {
+	qui levelsof `srowvar', local(srow_levels) missing
+	local nsrow: list sizeof srow_levels
+}
+else {
+	local srow_levels 1
+	local nsrow = 1
+}
 
 
-/*--------------------------------------------------------------------
-## Com superrow: uma submatrix (nrow*ntables)*(ncol) pra cada categoria da srow
----------------------------------------------------------------------*/
-if !missing("`srvar'") {
-	preserve
-	/*--------------------------------
-	### Labels para submatrices
-	----------------------------------*/
-	qui levelsof `rowvar', local(varlevels)
-	foreach l in `varlevels' {
-		local new : label (`1') `l'
-		local labels_`rowvar' = `"`labels_`rowvar''"' + `" ""' + subinstr(substr("`new'", 1, 30), ".", " ", .) + `"""'
+unab stat_list: table*
+local nstats: word count `stat_list'
+
+
+if !(missing("`colvar'") & missing("`srowvar'")) {
+	cap drop _fillin
+	fillin `rowvar' `colvar' `scolvar' `srowvar'
+	drop _fillin
+}
+
+/*********************************************************************
+# Build matrix
+**********************************************************************/
+matrix xt_results = J(1,`ncol'*`nscol', .)
+
+foreach srow in `srow_levels' {
+
+	if `nsrow' > 1 {
+		tempfile stats_data
+		qui save `stats_data'
+		qui keep if `srowvar' == `srow'
 	}
 
-	/*--------------------------------
-	### Cria cada submatrix
-	----------------------------------*/
-	foreach s in `sr_levels' {
-		qui keep if `srvar' == `s'
-		sort `rowvar' `colvar'
+	local psrow: list posof "`srow'" in srow_levels
+	mat def xt_scol_`psrow' = J(`nrow'*`nstats', 1, .)
 
-		mat sr`s' = J(`nrow'*`ntables', `ncol', .)
-		local matrix_rownames = (`"`labels_`rowvar''"' + " ") * `ntables'
-		mat rownames sr`s' = `matrix_rownames'
+	foreach scol in `scol_levels' {
 
-		forvalues r = 1/`nrow' {
-			forvalues c = 1/`ncol' {
-				forvalues t = 1/`ntables' {
-					mat sr`s'[((`r'-1)*`ntables')+`t', `c'] = table`t'[((`r'-1)*`ncol')+`c']	
+		if `nscol' > 1 {
+		tempfile stats_data_`srow'
+		qui save `stats_data_`srow''
+		qui keep if `scolvar' == `scol'
+		}
+
+		local pscol: list posof "`scol'" in scol_levels
+		mat def xt_`pscol' = J(`nrow'*`nstats', `ncol', .)
+
+		sort `rowvar' `colvar' `scolvar' `srowvar'
+		forvalues row = 1/`nrow' {
+			forvalues col = 1/`ncol' {
+				forvalues stat = 1/`nstats' {
+
+						mat xt_`pscol'[((`row'-1)*`nstats')+`stat', `col'] = table`stat'[((`row'-1)*`ncol')+`col']
+
 				}
 			}
 		}
-		restore, preserve
-	}
-	restore
 
-	/*--------------------------------
-	### Restaura dados e reporta
-	----------------------------------*/
-	/* Recupera dados originais */
-	qui use `originaldata', replace
 
-	/* Junta matrizes e reporta */
-	matrix xtable = J(1,`ncol', .)
-	mat colnames xtable = `c_levels'
+		mat xt_scol_`psrow' = xt_scol_`psrow',  xt_`pscol'
+		mat drop xt_`pscol'
 
-	foreach s in `sr_levels' {
-		matrix head = J(1,`ncol',.)
-		matrix rownames head =  `s'
-		matrix xtable =  xtable \ head \ sr`s'
-		matrix drop sr`s' head 
+		if `nscol' > 1 {
+			qui use `stats_data_`srow'', clear
+		}
 	}
 
+	mat xt_scol_`psrow' = xt_scol_`psrow'[1..., 2...]
+
+	if `nsrow' > 1 {
+		mat srow_header = J(1,`ncol'*`nscol', .)
+		mat xt_results = xt_results \ srow_header \ xt_scol_`psrow'
+	}
+	else {
+		mat xt_results = xt_results \ xt_scol_`psrow'
+	}
+	mat drop xt_scol_`psrow'
+
+	if `nsrow' > 1 {
+		qui use `stats_data', clear
+	}
 }
 
-/*--------------------------------------------------------------------
-## Sem superrow: uma submatrix (ntables)*(ncol) pra cada categoria da row
----------------------------------------------------------------------*/
 
-if missing("`srvar'") {
-	preserve
-	/*--------------------------------
-	### Labels para submatrices
-	----------------------------------*/
-	forvalues t = 1/`ntables'  {
-		local table_label: variable label table`t'
-		/* remove pontos das var labels, para poder usar com mat rownames */
-		*local labels_tables = "`labels_tables'" + " " + subinstr("`table_label'" , ".", " ", .)
-		local labels_tables = `"`labels_tables'"' + `" ""' + subinstr(substr("`table_label'", 1, 30), ".", " ", .) + `"""'
+mat xtable = xt_results[2..., 1...]
+mat drop xt_results
 
-	}
 
-	/*--------------------------------
-	### Cria cada submatrix
-	----------------------------------*/
-	foreach r in `r_levels' {
+/*********************************************************************
+# Labels
+**********************************************************************/
 
-		qui keep if `rowvar' == `r'
-		sort `colvar'
+/* Rows */
+foreach srow in `srow_levels' {
 
-		mat r`r' = J(`ntables', `ncol', .)
-		if `ntables' == 1 {
-			matrix rownames r`r' = `r'
-		}
-		else {
-			mat rownames r`r' = `labels_tables'
-		}
+	local psrow: list posof "`srow'" in srow_levels
+
+	foreach row in `row_levels' {
+		local row_label : label (`rowvar') `row'
+		#delimit ;
+		local mat_rownames_`psrow' = `"`mat_rownames_`psrow''"' + `" ""' + 
+									subinstr(substr("`row_label'", 1, 30), ".", " ", .) + `"""' +
+								    (`""-""')*(`nstats'-1)
+		;
+		#delimit cr
 		
-
-		forvalues c = 1/`ncol' {
-			forvalues t = 1/`ntables' {
-				mat r`r'[`t', `c'] = table`t'[`c']	
-			}
-		}
-		restore, preserve
-	}
-	restore
-
-	/*--------------------------------
-	### Restaura dados e reporta
-	----------------------------------*/
-	/* Recupera dados originais */
-	qui use `originaldata', replace
-
-	/* Junta matrizes e reporta */
-	matrix xtable = J(1,`ncol', .)
-	mat colnames xtable = `c_levels'
-
-	foreach r in `r_levels' {
-		/* Se for apenas uma estatística, não tem header */
-		if `ntables' == 1 {
-			matrix xtable =  xtable \ r`r'
-		}
-		else {
-			matrix head = J(1,`ncol',.)
-			matrix rownames head =  `r'
-			matrix xtable =  xtable \ head \ r`r'
-			matrix drop head
-		}
-		matrix drop r`r'
 	}
 
+	if `nsrow' > 1 {
+		local srow_label : label (`srowvar') `srow'
+		local mat_rownames_`psrow' =  `" ""' + subinstr(substr("`srow_label'", 1, 30), ".", " ", .) + `"""' + `"`mat_rownames_`psrow''"'
+	}
+
+	local mat_rownames = `"`mat_rownames'"' + `"`mat_rownames_`psrow''"' 
 }
 
+mat rownames xtable = `mat_rownames'
 
-/* Exporta */
-/* Remove linha em branco na matriz de resultados */
-mat xtable = xtable[2..., 1...]
+/* Columns */
+if !missing("`colvar'") {
+	foreach scol in `scol_levels' {
 
-putexcel set xtable.xlsx, replace
-qui putexcel A1 = matrix(xtable, names)
+		local pscol: list posof "`scol'" in scol_levels
 
-di as smcl "output written to {browse  "`"xtable.xlsx}"'" 
+		foreach col in `col_levels' {
+			local col_label : label (`colvar') `col'
+			#delimit ;
+			local mat_colnames_`pscol' = `"`mat_colnames_`pscol''"' + `" ""' + 
+										subinstr(substr("`col_label'", 1, 30), ".", " ", .) + `"""'
+			;
+			#delimit cr
+			
+		}
+
+		local mat_colnames = `"`mat_colnames'"' + `"`mat_colnames_`pscol''"' 
+	}
+}
+
+mat colnames xtable = `mat_colnames'
+
+/*********************************************************************
+# Export
+**********************************************************************/
+local rowvar_label: var label `rowvar'
+local colvar_label: var label `colvar'
+
+
+#delimit ;
+qui putexcel A2 = matrix(xtable, names) 
+			 A2 = ("`rowvar_label'")
+			 B1 = ("`colvar_label'")
+			 using xtable.xlsx, replace
+;
+#delimit cr
+
+di as smcl "Output written to {browse  "`"xtable.xlsx}"'" 
 end
