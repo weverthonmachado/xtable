@@ -53,7 +53,7 @@ Other things in the roadmap include an option to not call `putexcel` directly an
 ****** Will not work with current version of xtable ******
 sysuse auto
 putexcel set myfile.xlsx
-foreach v in "rep78 headroom foreign" {
+foreach v in rep78 headroom foreign {
     xtable `v', cont(mean mpg)
     putexcel A1=matrix(xtable, names), sheet(`v') modify
 }

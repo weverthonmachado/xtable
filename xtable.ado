@@ -3,15 +3,15 @@
 
 /// Weverthon Machado
 
-v0.4 - 2019-05-04
+v0.5 - 2019-05-08
 ---------------------------------------------------------------------*/
-program define xtable
+program define xtable, rclass
 version 13.1
 
 /* Get only -table- options that are needed here. The final asterisk 
 captures everything else */
 syntax varlist(max=3) [if] [in] [fw aw pw iw] [, /* 
-		*/ BY(varlist) COLumn REPLACE ROW SColumn  *]
+		*/ BY(varlist) REPLACE *]
 
 
 /*********************************************************************
@@ -31,25 +31,37 @@ local srow1var = "`1'"
 local srow2var = "`2'"
 local srow3var = "`3'"
 local srow4var = "`4'"
-local nby: list sizeof by
+local nby: list sizeof by	
+
 
 
 /* Run -table- */
 preserve
-table `tableargs' replace
-
+if !missing("`replace'") {
+	table `tableargs'
+}
+else {
+	if !missing("`options'") | (missing("`options'") & regexm("`tableargs'", ",")) {
+		table `tableargs' replace
+	}
+	else {
+		table `tableargs', replace
+	}
+}
 
 /* Get numbers and levels of vars and stats */
 qui levelsof `rowvar', local(row_levels) missing
 local nrow: list sizeof row_levels
+
+unab stat_list: table*
+local nstats: word count `stat_list'
 
 if !missing("`colvar'") {
 	qui levelsof `colvar', local(col_levels) missing
 	local ncol: list sizeof col_levels
 }
 else {
-	local col_levels 1
-	local ncol = 1
+	local ncol = `nstats'
 }
 
 
@@ -72,9 +84,6 @@ forvalues n = 1/4 {
 		local nsrow`n' = 1
 	}
 }
-
-unab stat_list: table*
-local nstats: word count `stat_list'
 
 
 if !(missing("`colvar'") & missing("`srow2var'")) {
@@ -139,8 +148,15 @@ foreach srow1 in `srow1_levels' {
 			foreach srow4 in `srow4_levels' {
 
 				local psrow4: list posof "`srow4'" in srow4_levels
-				mat def xt_results_`psrow1'`psrow2'`psrow3'`psrow4' = ///
+				if !missing("`colvar'") {
+					mat def xt_results_`psrow1'`psrow2'`psrow3'`psrow4' = ///
 														J(`nrow'*`nstats', 1, .)
+				}
+				else {
+					mat def xt_results_`psrow1'`psrow2'`psrow3'`psrow4' = ///
+														J(`nrow', 1, .)
+				}
+				
 
 				if `nsrow4' > 1 {
 					tempfile stats_data_`psrow1'`psrow2'`psrow3'`psrow4'
@@ -161,15 +177,26 @@ foreach srow1 in `srow1_levels' {
 					}
 
 					local pscol: list posof "`scol'" in scol_levels
-					mat def xt_`pscol' = J(`nrow'*`nstats', `ncol', .)
-
 					sort `rowvar' `colvar' `scolvar' `srowvar1' `srowvar2' `srowvar3' `srowvar4'
+
+					if !missing("`colvar'") {
+						mat def xt_`pscol' = J(`nrow'*`nstats', `ncol', .)
+					}
+					else {
+						mat def xt_`pscol' = J(`nrow', `nstats', .)
+					}
+
 					forvalues row = 1/`nrow' {
 						forvalues col = 1/`ncol' {
 							forvalues stat = 1/`nstats' {
 
-								mat xt_`pscol'[((`row'-1)*`nstats')+`stat', `col'] = ///
+								if !missing("`colvar'") {
+									mat xt_`pscol'[((`row'-1)*`nstats')+`stat', `col'] = ///
 												table`stat'[((`row'-1)*`ncol')+`col']
+								}
+								else {
+									mat xt_`pscol'[`row', `col'] = table`col'[`row']
+								}
 
 							}
 						}
@@ -191,13 +218,27 @@ foreach srow1 in `srow1_levels' {
 				mat xt_results_`psrow1'`psrow2'`psrow3'`psrow4'  = ///
 					xt_results_`psrow1'`psrow2'`psrow3'`psrow4'[1..., 2...]
 
-				mat srow_header = J(`nby',`ncol'*`nscol', .)
-				mat xt_results_`psrow1'`psrow2'`psrow3' =     ///
+				if `nby' > 0 {
+					mat srow_header = J(`nby',`ncol'*`nscol', .)
+
+					mat xt_results_`psrow1'`psrow2'`psrow3' =     ///
 					xt_results_`psrow1'`psrow2'`psrow3' \     ///
 					srow_header \						       ///
 					xt_results_`psrow1'`psrow2'`psrow3'`psrow4' 
+
+					mat drop xt_results_`psrow1'`psrow2'`psrow3'`psrow4' srow_header
+				}
+				else {
+					mat xt_results_`psrow1'`psrow2'`psrow3' =     ///
+					xt_results_`psrow1'`psrow2'`psrow3' \     ///
+					xt_results_`psrow1'`psrow2'`psrow3'`psrow4' 
+
+					mat drop xt_results_`psrow1'`psrow2'`psrow3'`psrow4' 
+				}
 				
-				mat drop xt_results_`psrow1'`psrow2'`psrow3'`psrow4' 
+
+				
+				
 
 				if `nsrow4' > 1 {
 					qui use `stats_data_`psrow2'`psrow3'`psrow4'', clear
@@ -260,15 +301,20 @@ foreach row in `row_levels' {
 		if `row'== . {
 				local row_label "Total"
 		}
+
 		#delimit ;
 		local mat_rownames_rows = 					
 							`"`mat_rownames_rows'"'  
 							 + `" ""' 											
 							 + subinstr(substr("`row_label'", 1, 30), ".", " ", .) 
 							 + `"""' 											
-							 + (`""-""')*(`nstats'-1)							
+							 					
 		;
 		#delimit cr
+
+		if !missing("`colvar'"){
+			local mat_rownames_rows = `"`mat_rownames_rows'"' + (`""-""')*(`nstats'-1)	
+		}
 
 }
 
@@ -388,10 +434,16 @@ if !missing("`colvar'") {
 
 		local mat_colnames = `"`mat_colnames'"' + `"`mat_colnames_`pscol''"' 
 	}
-
-mat colnames xtable = `mat_colnames'
-
 }
+else {
+
+	forvalues s =1/`nstats' {
+		local stat_label: var label table`s'
+		local mat_colnames = `"`mat_colnames'"' + `" ""' + ///
+									subinstr(substr("`stat_label'", 1, 30), ".", " ", .) + `"""'
+	}
+}
+mat colnames xtable = `mat_colnames'
 
 
 /*********************************************************************
@@ -409,6 +461,8 @@ if !missing("`colvar'") {
 	local colvar_label: var label `colvar'
 	qui putexcel B1 = ("`colvar_label'") using xtable.xlsx, modify
 }
+
+return matrix xtable = xtable
 
 di as smcl "Output written to {browse  "`"xtable.xlsx}"'" 
 end
