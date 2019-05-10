@@ -412,7 +412,7 @@ foreach srow1 in `srow1_levels' {
 mat rownames xtable = `mat_rownames'
 
 
-/* Columns and supercolumns */
+/* Columns */
 if !missing("`colvar'") {
 
 	foreach scol in `scol_levels' {
@@ -446,23 +446,86 @@ else {
 mat colnames xtable = `mat_colnames'
 
 
+/* Supercolumns */
+if !missing("`scolvar'") { 
+	foreach scol in `scol_levels' {
+		mat scol_names = J(1, `nscol'*`ncol', .)
+		local scol_label: label (`scolvar') `scol'
+		local mat_scolnames = `"`mat_scolnames'"' 										///
+								+ `" ""' 												///
+								+ subinstr(substr("`scol_label'", 1, 30), ".", " ", .)  ///
+								+ `"""'													///
+								+ (`""---""')*(`ncol'-1)
+	}
+
+	mat colnames scol_names = `mat_scolnames'
+}
+
+
 /*********************************************************************
 # Export
 **********************************************************************/
-local rowvar_label: var label `rowvar'
 
-#delimit ;
-qui putexcel A2 = matrix(xtable, names) A2 = ("`rowvar_label'")
-			 using xtable.xlsx, replace
-;
-#delimit cr
+/* Variable labels */
+local rowvar_label: var label `rowvar'
+if missing("`rowvar_label'"){
+	local rowvar_label "`rowvar'"
+}
+if `nby'>0 {
+	forvalues n = 1/`nby'{
+		local srow`n'var_label: var label `srow`n'var'
+		if missing("`srow`n'var_label'"){
+			local srow`n'var_label "`srow`n'var'"
+		}
+
+		if `n' > 1 {
+			local srow`n'var_label = ", " + `"`srow`n'var_label'"'
+		}
+	}
+
+	local rowvar_label = `"`srow1var_label'"' + 		///
+						 `"`srow2var_label'"' +  		///
+						 `"`srow3var_label'"' + 		///
+						 `"`srow4var_label'"' + 		///
+						 " and " + `"`rowvar_label'"'  
+}
+
+local colvar_label: var label `colvar'
+if missing("`colvar_label'"){
+	local colvar_label "`colvar'"
+}
+if !missing("`scolvar'"){
+	local scolvar_label: var label `scolvar'
+	if missing("`scolvar_label'"){
+		local scolvar_label "`scolvar'"
+	}
+
+	local colvar_label = `"`scolvar_label'"' +  " and " + `"`colvar_label'"'
+}
+
+
+/* putexcel */
+qui putexcel A1=(" ") using xtable.xlsx, replace
+
+if !missing("`scolvar'") {
+	qui putexcel A2 = matrix(scol_names, names) ///
+				 using xtable.xlsx, modify
+	mat drop scol_names
+}
+
+qui putexcel A3 = matrix(xtable, names) /// 
+			 A3 = ("`rowvar_label'")	///
+			 using xtable.xlsx, modify
 
 if !missing("`colvar'") {
-	local colvar_label: var label `colvar'
 	qui putexcel B1 = ("`colvar_label'") using xtable.xlsx, modify
 }
 
+
+
 return matrix xtable = xtable
+
+
 
 di as smcl "Output written to {browse  "`"xtable.xlsx}"'" 
 end
