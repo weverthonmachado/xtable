@@ -10,17 +10,15 @@ version 13.1
 
 /* Get only -table- options that are needed here. The final asterisk 
 captures everything else */
-syntax varlist(max=3) [if] [in] [fw aw pw iw] [, /* 
-		*/ BY(varlist) REPLACE *]
+syntax varlist(max=3) [if] [in] [fw aw pw iw] [, /// 
+		       BY(varlist) Name NOPut FILEname(string) ///
+		       SHeet(string) MODify REPLACE KEEPCELLFormat *]
 
 
 /*********************************************************************
 # Parse arguments
 **********************************************************************/
 /* Tokenize */
-tokenize
-local tableargs "`0'"
-
 tokenize `varlist'
 local rowvar = "`1'"
 local colvar = "`2'"
@@ -34,20 +32,10 @@ local srow4var = "`4'"
 local nby: list sizeof by	
 
 
-
 /* Run -table- */
 preserve
-if !missing("`replace'") {
-	table `tableargs'
-}
-else {
-	if !missing("`options'") | (missing("`options'") & regexm("`tableargs'", ",")) {
-		table `tableargs' replace
-	}
-	else {
-		table `tableargs', replace
-	}
-}
+table `varlist' `if' `in' [`weight'`exp'], `by' `options' replace
+
 
 /* Get numbers and levels of vars and stats */
 qui levelsof `rowvar', local(row_levels) missing
@@ -63,7 +51,6 @@ if !missing("`colvar'") {
 else {
 	local ncol = `nstats'
 }
-
 
 if !missing("`scolvar'") {
 	qui levelsof `scolvar', local(scol_levels) missing
@@ -447,85 +434,115 @@ mat colnames xtable = `mat_colnames'
 
 
 /* Supercolumns */
-if !missing("`scolvar'") { 
-	foreach scol in `scol_levels' {
-		mat scol_names = J(1, `nscol'*`ncol', .)
-		local scol_label: label (`scolvar') `scol'
-		local mat_scolnames = `"`mat_scolnames'"' 										///
-								+ `" ""' 												///
-								+ subinstr(substr("`scol_label'", 1, 30), ".", " ", .)  ///
-								+ `"""'													///
-								+ (`""---""')*(`ncol'-1)
+if missing("`put'") {
+	if !missing("`scolvar'") { 
+		foreach scol in `scol_levels' {
+			mat scol_names = J(1, `nscol'*`ncol', .)
+			local scol_label: label (`scolvar') `scol'
+			local mat_scolnames = `"`mat_scolnames'"' 										///
+									+ `" ""' 												///
+									+ subinstr(substr("`scol_label'", 1, 30), ".", " ", .)  ///
+									+ `"""'													///
+									+ (`""---""')*(`ncol'-1)
+		}
+
+		mat colnames scol_names = `mat_scolnames'
 	}
-
-	mat colnames scol_names = `mat_scolnames'
 }
-
 
 /*********************************************************************
 # Export
 **********************************************************************/
 
-/* Variable labels */
-local rowvar_label: var label `rowvar'
-if missing("`rowvar_label'"){
-	local rowvar_label "`rowvar'"
-}
-if `nby'>0 {
-	forvalues n = 1/`nby'{
-		local srow`n'var_label: var label `srow`n'var'
-		if missing("`srow`n'var_label'"){
-			local srow`n'var_label "`srow`n'var'"
-		}
+if missing("`noput'") {
 
-		if `n' > 1 {
-			local srow`n'var_label = ", " + `"`srow`n'var_label'"'
-		}
+	if missing("`filename'"){
+		local filename xtable.xlsx
 	}
 
-	local rowvar_label = `"`srow1var_label'"' + 		///
-						 `"`srow2var_label'"' +  		///
-						 `"`srow3var_label'"' + 		///
-						 `"`srow4var_label'"' + 		///
-						 " and " + `"`rowvar_label'"'  
-}
-
-local colvar_label: var label `colvar'
-if missing("`colvar_label'"){
-	local colvar_label "`colvar'"
-}
-if !missing("`scolvar'"){
-	local scolvar_label: var label `scolvar'
-	if missing("`scolvar_label'"){
-		local scolvar_label "`scolvar'"
+	if missing("`replace'") & missing("`modify'") {
+		if missing("`filename'") {
+			local replace replace
+		}
+		else {
+			local modify modify
+		}
+		
 	}
 
-	local colvar_label = `"`scolvar_label'"' +  " and " + `"`colvar_label'"'
+	/* Variable labels */
+	local rowvar_label: var label `rowvar'
+	if missing("`rowvar_label'"){
+		local rowvar_label "`rowvar'"
+	}
+	if `nby'>0 {
+		forvalues n = 1/`nby'{
+			local srow`n'var_label: var label `srow`n'var'
+			if missing("`srow`n'var_label'"){
+				local srow`n'var_label "`srow`n'var'"
+			}
+
+			if `n' > 1 {
+				local srow`n'var_label = ", " + `"`srow`n'var_label'"'
+			}
+		}
+
+		local rowvar_label = `"`srow1var_label'"' + 		///
+							 `"`srow2var_label'"' +  		///
+							 `"`srow3var_label'"' + 		///
+							 `"`srow4var_label'"' + 		///
+							 " and " + `"`rowvar_label'"'  
+	}
+
+	if !missing("`colvar'") {
+		local colvar_label: var label `colvar'
+		if missing("`colvar_label'"){
+			local colvar_label "`colvar'"
+		}
+	}
+	if !missing("`scolvar'"){
+		local scolvar_label: var label `scolvar'
+		if missing("`scolvar_label'"){
+			local scolvar_label "`scolvar'"
+		}
+
+		local colvar_label = `"`scolvar_label'"' +  " and " + `"`colvar_label'"'
+	}
+
+
+	/* putexcel */
+	qui putexcel A1=(" ") ///
+				 using `filename', `keepcellformat' sheet(`sheet') `replace' `modify'
+
+	if !missing("`scolvar'") {
+		qui putexcel A2 = matrix(scol_names, names) ///
+					 using `filename', modify `keepcellformat' sheet(`sheet')
+		mat drop scol_names
+	}
+
+	qui putexcel A3 = matrix(xtable, names) /// 
+				 A3 = ("`rowvar_label'")	///
+				 using `filename', modify `keepcellformat' sheet(`sheet')
+
+	if !missing("`colvar'") {
+		if !missing("`scolvar'") {
+			local colvar_cell B1
+		}
+		else {
+			local colvar_cell B2
+		}
+
+		qui putexcel `colvar_cell' = ("`colvar_label'") /// 
+					 using `filename', modify `keepcellformat' sheet(`sheet')
+	}
+
+	if !regexm("`filename'", "(\.xls|\.xlsx)") { 
+		local filename =  `"`filename'"' + ".xlsx"
+	}
+	di as smcl "Output written to {browse  "`"`filename'}"'" 
+
 }
-
-
-/* putexcel */
-qui putexcel A1=(" ") using xtable.xlsx, replace
-
-if !missing("`scolvar'") {
-	qui putexcel A2 = matrix(scol_names, names) ///
-				 using xtable.xlsx, modify
-	mat drop scol_names
-}
-
-qui putexcel A3 = matrix(xtable, names) /// 
-			 A3 = ("`rowvar_label'")	///
-			 using xtable.xlsx, modify
-
-if !missing("`colvar'") {
-	qui putexcel B1 = ("`colvar_label'") using xtable.xlsx, modify
-}
-
-
 
 return matrix xtable = xtable
 
-
-
-di as smcl "Output written to {browse  "`"xtable.xlsx}"'" 
 end
