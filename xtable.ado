@@ -3,7 +3,7 @@
 
 /// Weverthon Machado
 
-v0.6.1 - 2019-05-13
+v0.6.2 - 2019-05-13
 ---------------------------------------------------------------------*/
 program define xtable, rclass
 version 13.1
@@ -34,7 +34,7 @@ local nby: list sizeof by
 
 /* Run -table- */
 preserve
-table `varlist' `if' `in' [`weight'`exp'], `by' `options' replace
+table `varlist' `if' `in' [`weight'`exp'], by(`by') `options' replace
 
 
 /* Get numbers and levels of vars and stats */
@@ -459,10 +459,6 @@ if missing("`put'") {
 
 if missing("`noput'") {
 
-	if missing("`filename'"){
-		local filename xtable.xlsx
-	}
-
 	if missing("`replace'") & missing("`modify'") {
 		if missing("`filename'") {
 			local replace replace
@@ -472,6 +468,11 @@ if missing("`noput'") {
 		}
 		
 	}
+
+	if missing("`filename'"){
+		local filename xtable.xlsx
+	}
+
 
 	/* Variable labels */
 	local rowvar_label: var label `rowvar'
