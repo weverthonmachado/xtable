@@ -16,7 +16,7 @@ net install xtable, from ("https://raw.githubusercontent.com/weverthonmachado/xt
 
 ## Usage
 
-## Basic syntax
+### Basic syntax
 
 You can use the exact same syntax from `table`, because `xtable` will just pass the arguments to `table` and then export the results. So, instead of running:
 
@@ -44,7 +44,7 @@ The only real restriction is that you can not use it with the `by` prefix (i.e. 
 
 Also, the `concise` option, that suppresses rows with all missing entries, will not affect the exported table. If you use it, you will still get a concise table on Stata's results window, but the Excel spreadsheet will contain all rows. 
 
-## Exporting options
+### Exporting options
 
 By default, `xtable` will export the tabulation to a file named "xtable.xlsx" in the current working directory, overwriting it if it already exists. You can control the exporting process by using the following options, which will be passed to `putexcel`:
 
