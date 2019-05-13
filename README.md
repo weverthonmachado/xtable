@@ -16,6 +16,8 @@ net install xtable, from ("https://raw.githubusercontent.com/weverthonmachado/xt
 
 ## Usage
 
+## Basic syntax
+
 You can use the exact same syntax from `table`, because `xtable` will just pass the arguments to `table` and then export the results. So, instead of running:
 
 ```stata
@@ -38,28 +40,35 @@ And the spreadsheet will look like this:
 
 ![](excel.png)
 
-The only real restriction is that you can not use it with the `by` prefix (i.e. `by varname: xtable`). But bear in mind that with `table` and `xtable` you can specify row, column, supercolumn and up to four superrow variables, so you can get up to 7-way tabulations. 
+The only real restriction is that you can not use it with the `by` prefix (i.e. `by varname: xtable`). But bear in mind that you can specify row, column, supercolumn and up to four superrow variables, so you can get up to 7-way tabulations. 
 
-Also, the `concise` option, that suppress rows with all missing entries, will not affect the exported table. If you use it, you will still get a concise table on Stata's results window, but the Excel spreadsheet will contain all rows. 
+Also, the `concise` option, that suppresses rows with all missing entries, will not affect the exported table. If you use it, you will still get a concise table on Stata's results window, but the Excel spreadsheet will contain all rows. 
 
+## Exporting options
 
-## Work in progress
+By default, `xtable` will export the tabulation to a file named "xtable.xlsx" in the current working directory, overwriting it if it already exists. You can control the exporting process by using the following options, which will be passed to `putexcel`:
 
-There are a few cosmetic that I will improve soon, such as handling supercolumns labels. 
+- `filename(string)`: name of the Excel file to be used. Default is "xtable.xlsx". Both .xlsx and .xls extensions are accepted. If you do not specify an extension, .xlsx will be used;
+- `sheet(string)`: name of the Excel worksheet to be used. If the sheet exists in the specified file, the default is to modify it. To replace, use `sheet(example, replace)`;
+- `replace`: overwrite Excel file. Default is to modify if filename() is specified or overwrite "xtable.xlsx". Note that `table` also has a `replace` option which is not honored by `xtable`, althoguh it actually uses it internally;
+- `modify`: modify Excel file.
 
-Other things in the roadmap include an option to not call `putexcel` directly and just keep the created matrix on memory instead, so that the user can fully explore `putexcel`'s features, use it in a for loop, etc. E.g.:
-
+Example:
 ```stata
-****** Will not work with current version of xtable ******
-sysuse auto
-putexcel set myfile.xlsx
-foreach v in rep78 headroom foreign {
-    xtable `v', cont(mean mpg)
-    putexcel A1=matrix(xtable, names), sheet(`v') modify
-}
+webuse byssin
+xtable workplace smokes race [fw=pop], c(mean prob) format(%9.3f) sc filename(myfile) sheet(prevalence) replace
 ```
 
+Finally, the `noput` option will keep `xtable` from writing to any file. Instead, it will just store the matrix in r(xtable), so you can include it in a `putexcel` call (or use it in another way)
 
+```stata
+webuse byssin
+xtable workplace smokes race [fw=pop], c(mean prob) format(%9.3f) noput
+
+putexcel A1 = ("A nice and informative title") A3 = (r(xtable), names) using myfile.xlsx, replace
+```
+
+This might be particularly useful if you use Stata 14 or newer, which added [formatting options](https://blog.stata.com/2017/01/10/creating-excel-tables-with-putexcel-part-1-introduction-and-formatting/) to `putexcel`.
 
 ## Author
 

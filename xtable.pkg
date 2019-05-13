@@ -1,5 +1,5 @@
 v 3
-d xtable
+d xtable: Stata module to export table output to Excel
 d 
 d
 
