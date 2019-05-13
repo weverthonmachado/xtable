@@ -59,16 +59,16 @@ webuse byssin
 xtable workplace smokes race [fw=pop], c(mean prob) format(%9.3f) sc filename(myfile) sheet(prevalence) replace
 ```
 
-Finally, the `noput` option will keep `xtable` from writing to any file. Instead, it will just store the matrix in r(xtable), so you can include it in a `putexcel` call (or use it in another way)
+Finally, the `noput` option will keep `xtable` from writing to any file. Instead, it will just store the matrix in r(xtable), so you can include it in a `putexcel` call (or use it in another way):
 
 ```stata
 webuse byssin
 xtable workplace smokes race [fw=pop], c(mean prob) format(%9.3f) noput
 
-putexcel A1 = ("A nice and informative title") A3 = (r(xtable), names) using myfile.xlsx, replace
+putexcel A1 = ("A nice and informative title") A3 = matrix(r(xtable), names) using myfile.xlsx, replace
 ```
 
-This might be particularly useful if you use Stata 14 or newer, which added [formatting options](https://blog.stata.com/2017/01/10/creating-excel-tables-with-putexcel-part-1-introduction-and-formatting/) to `putexcel`.
+This might be particularly useful if you use Stata 14 or newer, which added [formatting options](https://blog.stata.com/2017/01/10/creating-excel-tables-with-putexcel-part-1-introduction-and-formatting/) to `putexcel`. The matrix saved in r(xtable) will not include supercolumn labels. 
 
 ## Author
 

@@ -3,7 +3,7 @@
 
 /// Weverthon Machado
 
-v0.5 - 2019-05-08
+v0.6.1 - 2019-05-13
 ---------------------------------------------------------------------*/
 program define xtable, rclass
 version 13.1
@@ -439,6 +439,9 @@ if missing("`put'") {
 		foreach scol in `scol_levels' {
 			mat scol_names = J(1, `nscol'*`ncol', .)
 			local scol_label: label (`scolvar') `scol'
+			if `scol'== . {
+				local scol_label "Total"
+			}
 			local mat_scolnames = `"`mat_scolnames'"' 										///
 									+ `" ""' 												///
 									+ subinstr(substr("`scol_label'", 1, 30), ".", " ", .)  ///
