@@ -1,11 +1,16 @@
 {smcl}
+{viewerjumpto "Syntax" "xtable##syntax"}{...}
+{viewerjumpto "Description" "xtable##description"}{...}
+{viewerjumpto "Options" "xtable##options"}{...}
+{viewerjumpto "Examples" "xtable##examples"}{...}
+{viewerjumpto "Stored Results" "xtable##stored"}{...}
 
 {title:Title}
 
 {p 4 4 2}
 {bf:xtable} - Export table output to Excel.
 
-
+{marker syntax}{...}
 {title:Syntax}
 
 {p 4 4 2}
@@ -33,13 +38,13 @@ Unlike {help table}, {bf:xtable} does not accept the prefix
 {space 4}{hline}
 
 
-
+{marker description}{...}
 {title:Description}
 
 {p 4 4 2}
 {bf:xtable} is a drop-in replacement for {help table}. 
 You can just replace {bf:table} with {bf:xtable} in your code and 
-use it the same way (see xtable##examples:Examples). The actual tabulation will be 
+use it the same way (see {help xtable##examples:Examples}). The actual tabulation will be 
 done by {bf:table}, so you will get the exact same output 
 in the results window, plus a link to an Excel 
 spreadsheet containing the exported table.
@@ -58,7 +63,7 @@ Because it depends on {bf:putexcel}, {bf:xtable} requires Stata 13.1
 or newer.
 
 
-
+{marker options}{...}
 {title:Options}
 
 {dlgtab:table_options}
@@ -97,7 +102,6 @@ which added formatting options to {bf:putexcel}.
 
 
 {marker examples}{...}
-
 {title:Examples}
 
     Setup
@@ -124,7 +128,7 @@ which added formatting options to {bf:putexcel}.
 
 
 
-
+{marker stored}{...}
 {title:Stored results}
 
 {phang}
