@@ -123,7 +123,7 @@ which added formatting options to {bf:putexcel}.
         . xtable workplace smokes race [fw=pop], by(sex) c(mean prob)
 
     Cancel automatic exporting and use stored matrix with putexcel:
-        . xtable workplace smokes race [fw=pop], by(sex) c(mean prob)
+        . xtable workplace smokes race [fw=pop], by(sex) c(mean prob) noput
         . putexcel A1 = ("A nice and informative title") A3 = matrix(r(xtable), names) using myfile.xlsx, replace
 
 
