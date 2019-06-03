@@ -64,8 +64,7 @@ or newer.
 {dlgtab:table_options}
 
 {p 4 4 2}
-Please refer to {help table} to see the full range of its capabilities. Formatting options such as {it:concise} 
-and {it:format(%}{it:{help fmt}}) will affect only the output shown in the results windows, not the exported table. 
+Please refer to {help table} to see the full range of its capabilities. Formatting options such as {it:cellwidth()}, {it:concise} and {it:format(%}{it:{help fmt}}) will affect only the output shown in the results windows, not the exported table. 
 
 {dlgtab:export_options}
 
@@ -104,8 +103,8 @@ which added formatting options to {bf:putexcel}.
     Setup
         . sysuse auto
 
-    One-way table, multiple statistics
-        . xtable foreign, cont(mean mpg sd mpg)
+    One-way table, multiple statistics, with row totals
+        . xtable foreign, cont(mean mpg sd mpg) row
 
     Two-way table, multiple statistics, specifying filename and sheetname
         . xtable foreign rep78, cont(mean mpg sd mpg) filename(results.xlsx) sheet(table1, replace) replace
@@ -116,11 +115,11 @@ which added formatting options to {bf:putexcel}.
     Setup
         . webuse byssin1
 
-    Four-way table
-        . table workplace smokes race [fw=pop], by(sex) c(mean prob)
+    Four-way table, with row, column and supercolumn totals
+        . xtable workplace smokes race [fw=pop], by(sex) c(mean prob)
 
     Cancel automatic exporting and use stored matrix with putexcel:
-        . table workplace smokes race [fw=pop], by(sex) c(mean prob)
+        . xtable workplace smokes race [fw=pop], by(sex) c(mean prob)
         . putexcel A1 = ("A nice and informative title") A3 = matrix(r(xtable), names) using myfile.xlsx, replace
 
 
