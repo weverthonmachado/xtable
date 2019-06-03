@@ -1,7 +1,10 @@
-# xtable: Stata module to export table output to Excel
+# xtable: Stata module for exporting table output to Excel
 
 
-`xtable` exports output from Stata's built-in command `table` to an Excel spreadsheet. It works as drop-in replacement: you can just replace `table` with `xtable` and call it the same way (see [Usage](#usage) for minor restrictions and additional options). `table` is a very powerful and flexible command, but it's not easy to get its nice tables out of Stata for further processing. You have to resort to copy/paste or, at best, [`logout`](http://fmwww.bc.edu/RePEc/bocode/l/logout.html). The `putexcel` command  [introduced](https://blog.stata.com/2013/09/25/export-tables-to-excel/) in Stata 13 made exporting stuff to Excel a lot easier, but it relies on stored results and `table` produces none. 
+`xtable` exports output from Stata's built-in command `table` to an Excel spreadsheet. It works as drop-in replacement: you can just replace `table` with `xtable` in your code and run it the same way (see [Usage](#usage) for minor restrictions and additional options). You will get the exact same output 
+in the results window, plus a link to an Excel spreadsheet containing the exported table.
+
+`table` is a very powerful and flexible command, but it's not easy to get its nice tables out of Stata for further processing. You have to resort to copy/paste or, at best, [`logout`](http://fmwww.bc.edu/RePEc/bocode/l/logout.html). The `putexcel` command  [introduced](https://blog.stata.com/2013/09/25/export-tables-to-excel/) in Stata 13 made exporting stuff to Excel a lot easier, but it relies on stored results and `table` produces none. 
 
 `xtable` leverages `table`'s `replace` option to create a matrix that reproduces as best as possible what's shown on screen and then exports it using `putexcel`. Because it depends on `putexcel`, `xtable` requires Stata 13 or newer.
 
@@ -50,7 +53,7 @@ By default, `xtable` will export the tabulation to a file named "xtable.xlsx" in
 
 - `filename(string)`: name of the Excel file to be used. Default is "xtable.xlsx". Both .xlsx and .xls extensions are accepted. If you do not specify an extension, .xlsx will be used;
 - `sheet(string)`: name of the Excel worksheet to be used. If the sheet exists in the specified file, the default is to modify it. To replace, use `sheet(example, replace)`;
-- `replace`: overwrite Excel file. Default is to modify if filename() is specified or overwrite "xtable.xlsx". Note that `table` also has a `replace` option which is not honored by `xtable`, althoguh it actually uses it internally;
+- `replace`: overwrite Excel file. Default is to modify if filename() is specified or overwrite "xtable.xlsx". Note that `table` also has a `replace` option which is not honored by `xtable`;
 - `modify`: modify Excel file.
 
 Example:

@@ -3,7 +3,7 @@
 
 /// Weverthon Machado
 
-v0.6.2 - 2019-05-13
+v0.6.3 - 2019-06-03
 ---------------------------------------------------------------------*/
 program define xtable, rclass
 version 13.1
@@ -49,7 +49,8 @@ if !missing("`colvar'") {
 	local ncol: list sizeof col_levels
 }
 else {
-	local ncol = `nstats'
+	/* If there's no colvar, stats are displayed in columns*/
+	local ncol = `nstats' 
 }
 
 if !missing("`scolvar'") {
@@ -72,8 +73,8 @@ forvalues n = 1/4 {
 	}
 }
 
-
-if !(missing("`colvar'") & missing("`srow2var'")) {
+/* complete obs if there's at least a col or srow var */
+if !missing("`colvar'") | !missing("`srow1var'") {
 	cap drop _fillin
 	fillin `rowvar' `colvar' `scolvar' `srow1var' `srow2var' `srow3var' `srow4var'
 	drop _fillin
@@ -173,6 +174,9 @@ foreach srow1 in `srow1_levels' {
 						mat def xt_`pscol' = J(`nrow', `nstats', .)
 					}
 
+					/*---------------------------------------------------------
+					## Basic matrix (row X col X stat)
+					---------------------------------------------------------*/
 					forvalues row = 1/`nrow' {
 						forvalues col = 1/`ncol' {
 							forvalues stat = 1/`nstats' {
@@ -188,6 +192,7 @@ foreach srow1 in `srow1_levels' {
 							}
 						}
 					}
+					/*---------------------------------------------------------*/
 
 
 					mat xt_results_`psrow1'`psrow2'`psrow3'`psrow4'  = ///
@@ -457,8 +462,12 @@ if missing("`put'") {
 # Export
 **********************************************************************/
 
+/* option noput supresses export */
 if missing("`noput'") {
 
+	/* If user dows not specify replace or modify, does the following:
+	- If no filename was specified, replace xtable.xlsx
+	- If a filnema was specified, modify it. */
 	if missing("`replace'") & missing("`modify'") {
 		if missing("`filename'") {
 			local replace replace
@@ -472,6 +481,14 @@ if missing("`noput'") {
 	if missing("`filename'"){
 		local filename xtable.xlsx
 	}
+
+
+	/* Parse sheet name and replace option */
+	local comma = strpos(`"`sheet'"', ",") 
+	local sheetreplace = substr(`"`sheet'"', `comma', .)
+	if !missing("`pos'"){
+		local sheet = substr(`"`name'"', 1, `pos'-1)
+	} 
 
 
 	/* Variable labels */
@@ -516,7 +533,7 @@ if missing("`noput'") {
 
 	/* putexcel */
 	qui putexcel A1=(" ") ///
-				 using `filename', `keepcellformat' sheet(`sheet') `replace' `modify'
+				 using `filename', `keepcellformat' sheet(`sheet' `sheetreplace') `replace' `modify'
 
 	if !missing("`scolvar'") {
 		qui putexcel A2 = matrix(scol_names, names) ///
