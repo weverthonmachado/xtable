@@ -110,9 +110,9 @@ which added formatting options to {bf:putexcel}.
     Two-way table, multiple statistics, specifying filename and sheetname
         . xtable foreign rep78, cont(mean mpg sd mpg) filename(results.xlsx) sheet(table1, replace) replace
 
-{p 4 4 2}
+
 	-------------------------------------------------------------
-	
+
     Setup
         . webuse byssin1
 
