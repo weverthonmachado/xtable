@@ -2,11 +2,11 @@ v 3
 d xtable: Stata module for exporting table output to Excel
 d 
 d xtable is a drop-in replacement for Stata's buit-in command -table-: you can just 
-d replace `table` with `xtable` in your code and run it the same way. You will get 
+d replace table with xtable in your code and run it the same way. You will get 
 d the exact same output in the results window, plus a link to an Excel spreadsheet 
 d containing the exported table.
 
-
+d
 d v0.6.3
 d Distribution-Date: 03jun2019
 f xtable.ado
