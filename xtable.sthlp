@@ -14,7 +14,7 @@
 {title:Syntax}
 
 {p 4 4 2}
-{bf:xtable} uses the same syntax from {help table}:
+{bf:xtable} uses the same syntax of {help table}:
 
 {p 8 8 2} {bf:xtable} {it:rowvar} [ {it:colvar} [ {it:supercolvar} ] ] 
 [{it:{help if}}] [{it:{help in}}] [{it:{help weight}}] 
@@ -30,7 +30,7 @@ Unlike {help table}, {bf:xtable} does not accept the prefix
 {marker export_options_tbl}{...}
 {col 5}{it:export_options}{col 43}{it:Description}
 {space 4}{hline}
-{col 5}{ul:file}name({it:string}){col 43}name of the Excel file (passed to {help putexcel}); default is {it:xtable.xlsx}
+{col 5}{ul:file}name({it:{help filename}}){col 43}name of the Excel file (passed to {help putexcel}); default is {it:xtable.xlsx}
 {col 5}{ul:sh}eet("{it:sheetname}" [, replace]){col 43}write to Excel worksheet {it:sheetname} (passed to {help putexcel})
 {col 5}replace{col 43}overwrite Excel file (passed to {help putexcel}); default is to modify if {it:filename} is specified or overwrite xtable.xlsx
 {col 5}{ul:mod}ify{col 43}modify Excel file (passed to {help putexcel})
@@ -80,7 +80,7 @@ You can control the exporting process by using the following options,
 which will be passed to {help putexcel}:
 
 {phang}
-{bf:filename} specifies the name of the Excel file to be used. Default is "xtable.xlsx". 
+{bf:filename({it:{help filename}})} specifies the name of the Excel file to be used. Default is "xtable.xlsx". 
 Both .xlsx and .xls extensions are accepted. If no extension is specified, .xlsx will be used.
 
 {phang}
@@ -97,7 +97,7 @@ specified or overwrite "xtable.xlsx".
 {phang}
 {bf:noput} keeps {bf:xtable} from writing to any file. Instead, it will just 
 store the matrix in {bf:r(xtable)}, so you can include it in a {help putexcel}
-call or use it in any other way. This might be particularly useful if you use Stata 14 or newer, 
+call or use it in any other way (see example below). This might be particularly useful if you use Stata 14 or newer, 
 which added formatting options to {bf:putexcel}.
 
 
@@ -119,11 +119,11 @@ which added formatting options to {bf:putexcel}.
     Setup
         . webuse byssin1
 
-    Four-way table, with row, column and supercolumn totals
-        . xtable workplace smokes race [fw=pop], by(sex) c(mean prob)
+    Four-way table, with frequency weight and row, column and supercolumn totals
+        . xtable workplace smokes race [fw=pop], by(sex) c(mean prob) row col scol
 
     Cancel automatic exporting and use stored matrix with putexcel:
-        . xtable workplace smokes race [fw=pop], by(sex) c(mean prob) noput
+        . xtable workplace smokes race [fw=pop], by(sex) c(mean prob) row col scol noput
         . putexcel A1 = ("A nice and informative title") A3 = matrix(r(xtable), names) using myfile.xlsx, replace
 
 

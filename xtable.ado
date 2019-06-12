@@ -3,7 +3,7 @@
 
 /// Weverthon Machado
 
-v0.6.3 - 2019-06-03
+v0.6.4 - 2019-06-12
 ---------------------------------------------------------------------*/
 program define xtable, rclass
 version 13.1
@@ -486,8 +486,8 @@ if missing("`noput'") {
 	/* Parse sheet name and replace option */
 	local comma = strpos(`"`sheet'"', ",") 
 	local sheetreplace = substr(`"`sheet'"', `comma', .)
-	if !missing("`pos'"){
-		local sheet = substr(`"`name'"', 1, `pos'-1)
+	if `comma' != 0 {
+		local sheet = substr(`"`sheet'"', 1, `comma'-1)
 	} 
 
 
