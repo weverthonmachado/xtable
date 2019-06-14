@@ -14,7 +14,7 @@ in the results window, plus a link to an Excel spreadsheet containing the export
 
 Install it by typing:
 ```stata
-net install xtable, from ("https://raw.githubusercontent.com/weverthonmachado/xtable/master")
+ssc install xtable
 ```
 
 ## Usage
