@@ -3,7 +3,7 @@
 
 /// Weverthon Machado
 
-v0.6.4 - 2019-06-12
+v1.0.1 - 2019-12-14
 ---------------------------------------------------------------------*/
 program define xtable, rclass
 version 13.1
@@ -38,13 +38,27 @@ table `varlist' `if' `in' [`weight'`exp'], by(`by') `options' replace
 
 
 /* Get numbers and levels of vars and stats */
+/* + encode string variables */
+capture confirm string variable `rowvar'
+if !_rc {
+	encode `rowvar', gen(temp_rowvar)
+	drop `rowvar'
+	rename temp_rowvar `rowvar'
+}
 qui levelsof `rowvar', local(row_levels) missing
 local nrow: list sizeof row_levels
+
 
 unab stat_list: table*
 local nstats: word count `stat_list'
 
 if !missing("`colvar'") {
+	capture confirm string variable `colvar'
+	if !_rc {
+		encode `colvar', gen(temp_colvar)
+		drop `colvar'
+		rename temp_colvar `colvar'
+	}
 	qui levelsof `colvar', local(col_levels) missing
 	local ncol: list sizeof col_levels
 }
@@ -54,6 +68,12 @@ else {
 }
 
 if !missing("`scolvar'") {
+	capture confirm string variable `scolvar'
+	if !_rc {
+		encode `scolvar', gen(temp_scolvar)
+		drop `scolvar'
+		rename temp_scolvar `scolvar'
+	}
 	qui levelsof `scolvar', local(scol_levels) missing
 	local nscol: list sizeof scol_levels
 }
@@ -64,6 +84,12 @@ else {
 
 forvalues n = 1/4 {
 	if !missing("`srow`n'var'") {
+		capture confirm string variable `srow`n'var'
+		if !_rc {
+			encode `srow`n'var', gen(temp_srowvar)
+			drop `srow`n'var'
+			rename temp_srowvar `srow`n'var'
+		}
 		qui levelsof `srow`n'var', local(srow`n'_levels) missing
 		local nsrow`n': list sizeof srow`n'_levels
 	}
@@ -287,7 +313,7 @@ mat drop xt_results
 # Labels
 **********************************************************************/
 
-/* Rows ans superrows */
+/* Rows and superrows */
 foreach row in `row_levels' {
 		local row_label : label (`rowvar') `row'
 		if `row'== . {
