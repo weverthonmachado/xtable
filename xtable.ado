@@ -3,7 +3,7 @@
 
 /// Weverthon Machado
 
-v1.0.1 - 2019-12-14
+v1.0.2 - 2019-12-22
 ---------------------------------------------------------------------*/
 program define xtable, rclass
 version 13.1
@@ -259,7 +259,7 @@ foreach srow1 in `srow1_levels' {
 				
 
 				if `nsrow4' > 1 {
-					qui use `stats_data_`psrow2'`psrow3'`psrow4'', clear
+					qui use `stats_data_`psrow1'`psrow2'`psrow3'`psrow4'', clear
 				}
 
 			}
