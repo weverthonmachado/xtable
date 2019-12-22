@@ -147,6 +147,6 @@ weverthonmachado[at]gmail[dot]com    {break}
 {browse "https://weverthonmachado.github.io":weverthonmachado.github.io}{break}
 
 {p 4 4 2}
-v1.0.0 
+v1.0.2
 
 
